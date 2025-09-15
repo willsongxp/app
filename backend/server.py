@@ -1,14 +1,18 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
+import yagmail
 from pathlib import Path
-from pydantic import BaseModel, Field
-from typing import List
+from pydantic import BaseModel, Field, EmailStr
+from typing import List, Optional
 import uuid
 from datetime import datetime
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
 
 ROOT_DIR = Path(__file__).parent
@@ -18,6 +22,12 @@ load_dotenv(ROOT_DIR / '.env')
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
+
+# Email configuration
+ADMIN_EMAIL = "testgyminspirebyaquiles@gmail.com"
+
+# Thread pool for email sending
+executor = ThreadPoolExecutor(max_workers=3)
 
 # Create the main app without a prefix
 app = FastAPI()
@@ -34,6 +44,24 @@ class StatusCheck(BaseModel):
 
 class StatusCheckCreate(BaseModel):
     client_name: str
+
+class ContactSubmission(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    email: EmailStr
+    phone: str
+    service: str
+    message: str
+    status: str = "new"  # new, contacted, completed
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class ContactSubmissionCreate(BaseModel):
+    name: str = Field(..., min_length=2, max_length=100)
+    email: EmailStr
+    phone: str = Field(..., min_length=10, max_length=20)
+    service: str = Field(..., min_length=1, max_length=100)
+    message: str = Field(..., min_length=10, max_length=1000)
 
 # Add your routes to the router instead of directly to app
 @api_router.get("/")
