@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { companyInfo, mockFormSubmission } from '../mock';
+import { companyInfo } from '../mock';
 import { Send, Mail, MessageCircle, Instagram, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { useToast } from '../hooks/use-toast';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 export const ContactForm = () => {
   const [formData, setFormData] = useState({
@@ -26,12 +28,34 @@ export const ContactForm = () => {
     }));
   };
 
+  const submitContactForm = async (formData) => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/contact`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     
     try {
-      const result = await mockFormSubmission(formData);
+      const result = await submitContactForm(formData);
       if (result.success) {
         toast({
           title: "Sucesso!",
