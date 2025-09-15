@@ -14,6 +14,9 @@ from datetime import datetime
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 
+# Disable keyring for Docker environment
+os.environ['PYTHON_KEYRING_BACKEND'] = 'keyring.backends.null.Keyring'
+
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
