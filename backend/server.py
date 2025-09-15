@@ -126,9 +126,9 @@ def send_contact_email(contact_data: dict):
         ID: {contact_data['id']}
         """
         
-        # Configure yagmail with Gmail
+        # Configure yagmail with Gmail - disable keyring for Docker environment
         # Note: For production, use environment variables for email credentials
-        yag = yagmail.SMTP('testgyminspirebyaquiles@gmail.com')
+        yag = yagmail.SMTP('testgyminspirebyaquiles@gmail.com', password=None)
         
         yag.send(
             to=ADMIN_EMAIL,
